@@ -12,13 +12,25 @@ from app.db.models import Municipality, MunicipalityData
 SEEDS_DIR = Path(__file__).parent
 
 
+def parse_int(val):
+    if not val or val.strip().lower() == 'null':
+        return None
+    return int(float(val))
+
+
+def parse_float(val):
+    if not val or val.strip().lower() == 'null':
+        return None
+    return float(val)
+
+
 async def seed_municipalities(session):
     result = await session.execute(select(Municipality).limit(1))
     if result.scalar():
         print("✅ Муниципалитеты уже загружены, пропускаем")
         return
 
-    with open(SEEDS_DIR / "municipality.csv", encoding="utf-8") as f:
+    with open(SEEDS_DIR / "municipalities.csv", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         objects = [
             Municipality(
@@ -26,7 +38,7 @@ async def seed_municipalities(session):
                 name=row["name"],
                 region=row["region"],
                 type=row["type"],
-                area=float(row["area"]) if row["area"] else None,
+                area=parse_float(row["area"].replace(',', '.')) if row["area"] else None,
             )
             for row in reader
         ]
@@ -49,10 +61,10 @@ async def seed_municipality_data(session):
                 id=int(row["id"]),
                 municipality_id=int(row["municipality_id"]),
                 year=int(row["year"]),
-                population=int(row["population"]) if row["population"] else None,
-                birth_rate=float(row["birth_rate"]) if row["birth_rate"] else None,
-                death_rate=float(row["death_rate"]) if row["death_rate"] else None,
-                migration=int(row["migration"]) if row["migration"] else None,
+                population=parse_int(row["population"]),
+                birth_rate=parse_float(row["birth_rate"]),
+                death_rate=parse_float(row["death_rate"]),
+                migration=parse_int(row["migration"]),
             )
             for row in reader
         ]
